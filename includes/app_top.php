@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 $user = $user ?? require_login();
 $menu = [
+    ['beranda',        'index.php',            'home',            'Beranda',             ['admin','petugas','pelapor']],
     ['dashboard',      'dashboard.php',        'dashboard',       'Dashboard',           ['admin','petugas','pelapor']],
     ['peta',           'peta.php',             'map',             'Peta Laporan (GIS)',  ['admin','petugas','pelapor']],
     ['laporan-saya',   'laporan-saya.php',     'assignment_ind',  'Laporan Saya',        ['admin','petugas','pelapor']],

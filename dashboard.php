@@ -67,6 +67,7 @@ include __DIR__ . '/includes/app_top.php';
 
 <div class="flex flex-wrap items-center justify-between gap-space-sm mb-space-md">
   <div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+    <a href="index.php" class="inline-flex items-center gap-1 px-space-sm py-space-2xs rounded-full bg-primary-fixed text-primary font-label-md text-label-md hover:opacity-90"><span class="material-symbols-outlined text-lg">home</span>Kembali ke Beranda</a>
     <span>JagaRaksa</span><span class="material-symbols-outlined text-sm">chevron_right</span><span class="text-on-surface font-semibold">Dashboard Pemantauan</span>
   </div>
   <div class="flex items-center gap-space-xs px-space-sm py-space-2xs rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">

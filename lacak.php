@@ -6,6 +6,18 @@ $raw      = trim((string)($_GET['tiket'] ?? ''));
 $code     = normalize_ticket($raw);
 $data     = $code !== '' ? public_report($code) : null;
 $searched = $raw !== '';
+$perPage  = 6;
+$total    = (int)db()->query('SELECT COUNT(*) FROM reports WHERE deleted_at IS NULL')->fetchColumn();
+$pages    = max(1, (int)ceil($total / $perPage));
+$hal      = min(max(1, (int)($_GET['hal'] ?? 1)), $pages);
+$offset   = ($hal - 1) * $perPage;
+$listRows = [];
+if (!$data) {
+    $ls = db()->query("SELECT r.ticket_code, r.title, r.address, r.status, r.priority, r.created_at, c.name cat_name, d.name district_name
+        FROM reports r JOIN categories c ON c.id = r.category_id LEFT JOIN districts d ON d.id = r.district_id
+        WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $perPage OFFSET $offset");
+    $listRows = $ls->fetchAll();
+}
 
 include __DIR__ . '/includes/public_header.php';   // mendefinisikan $user
 
@@ -178,7 +190,40 @@ $card = 'bg-surface-container-lowest rounded-xl shadow-sm p-space-lg';
   })();
   </script>
 <?php endif; ?>
-
+<?php if ($data): ?>
+  <p class="mt-space-md"><a href="lacak.php" class="inline-flex items-center gap-1 text-primary font-label-md text-label-md"><span class="material-symbols-outlined text-lg">arrow_back</span>Kembali ke semua laporan</a></p>
+<?php else: ?>
+  <section class="mt-space-lg">
+    <div class="flex items-end justify-between gap-space-sm mb-space-md">
+      <h2 class="font-headline-lg text-headline-lg">Semua Laporan</h2>
+      <span class="font-label-sm text-label-sm text-on-surface-variant"><?= number_format($total) ?> laporan &bull; Halaman <?= $hal ?> dari <?= $pages ?></span>
+    </div>
+    <?php if (!$listRows): ?><div class="<?= $card ?> text-center text-on-surface-variant">Belum ada laporan.</div><?php endif; ?>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <?php foreach ($listRows as $x): ?>
+        <a href="lacak.php?tiket=<?= urlencode($x['ticket_code']) ?>" class="<?= $card ?> block hover:shadow-md transition-shadow">
+          <div class="flex flex-wrap items-center gap-2 mb-space-xs">
+            <span class="font-mono text-body-sm text-on-surface-variant">#<?= e($x['ticket_code']) ?></span> 
+            <!-- Hold -->
+            <?= priority_badge($x['priority']) ?>
+          </div>
+          <h3 class="font-label-lg text-label-lg line-clamp-2"><?= e($x['title']) ?></h3>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs"><?= e($x['cat_name']) ?> &bull; <?= e($x['address']) ?><?= $x['district_name'] ? ' (Kec. ' . e($x['district_name']) . ')' : '' ?></p>
+          <p class="font-label-sm text-label-sm text-on-surface-variant mt-space-xs"><?= e(format_tanggal($x['created_at'], true)) ?></p>
+        </a>
+      <?php endforeach; ?>
+    </div>
+    <?php if ($pages > 1): ?>
+    <nav class="flex flex-wrap items-center justify-center gap-1 mt-space-lg" aria-label="Halaman laporan">
+      <?php if ($hal > 1): ?><a class="px-3 py-1 rounded hover:bg-surface-container" href="?hal=<?= $hal - 1 ?>">&lsaquo;</a><?php endif; ?>
+      <?php for ($p = 1; $p <= $pages; $p++): ?>
+        <a class="px-3 py-1 rounded <?= $p === $hal ? 'bg-primary text-on-primary' : 'hover:bg-surface-container' ?>" href="?hal=<?= $p ?>"><?= $p ?></a>
+      <?php endfor; ?>
+      <?php if ($hal < $pages): ?><a class="px-3 py-1 rounded hover:bg-surface-container" href="?hal=<?= $hal + 1 ?>">&rsaquo;</a><?php endif; ?>
+    </nav>
+    <?php endif; ?>
+  </section>
+<?php endif; ?>
   <p class="mt-space-lg font-body-sm text-body-sm text-on-surface-variant">Ingin melihat kinerja penanganan secara keseluruhan? <a class="text-primary font-semibold" href="transparansi.php">Buka halaman Transparansi Kinerja</a>.</p>
 </div>
 </main>

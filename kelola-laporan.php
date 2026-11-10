@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->prepare('UPDATE reports SET deleted_at = NULL, deleted_by = NULL, delete_reason = NULL WHERE id = ?')->execute([$id]);
             log_report($id, (int)$user['id'], 'dipulihkan', 'Laporan dipulihkan dari arsip oleh admin.');
+            notify((int)$rep['user_id'], $id, 'Laporan #' . $rep['ticket_code'] . ' dipulihkan oleh admin dan kembali ditampilkan.');
             audit('laporan_dipulihkan', 'report', $id, 'Tiket ' . $rep['ticket_code']);
             $pdo->commit();
             flash('success', 'Laporan #' . $rep['ticket_code'] . ' dipulihkan.');
@@ -63,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('error', 'Hanya admin yang dapat mengarsipkan laporan.');
             redirect($back);
         }
-        if (mb_strlen($reason) < 5 || mb_strlen($reason) > 255) {
-            flash('error', 'Alasan pengarsipan wajib diisi (5-255 karakter).');
+        if (mb_strlen($reason) < 5 || mb_strlen($reason) > 200) {
+            flash('error', 'Alasan pengarsipan wajib diisi (5-200 karakter).');
             redirect($back);
         }
         $pdo = db();
@@ -74,6 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([(int)$user['id'], $reason, $id]);
             log_report($id, (int)$user['id'], 'diarsipkan', 'Diarsipkan oleh admin: ' . $reason);
             audit('laporan_diarsipkan', 'report', $id, 'Tiket ' . $rep['ticket_code'] . ': ' . $reason);
+            if ((int)$rep['user_id'] !== (int)$user['id']) {
+                notify((int)$rep['user_id'], null, 'Laporan #' . $rep['ticket_code'] . ' dihapus oleh admin. Alasan: ' . $reason);
+            }
             $pdo->commit();
             flash('success', 'Laporan #' . $rep['ticket_code'] . ' diarsipkan. Data dan riwayatnya tetap tersimpan dan dapat dipulihkan.');
         } catch (Throwable $ex) {
@@ -381,12 +385,13 @@ include __DIR__ . '/includes/app_top.php';
       </div>
     </form>
     <?php if ($isAdmin): ?>
+    <?php if ($isAdmin): ?>
     <details class="mt-space-sm">
       <summary class="cursor-pointer text-error font-label-md text-label-md inline-flex items-center gap-1"><span class="material-symbols-outlined text-lg">inventory_2</span>Arsipkan laporan</summary>
       <form method="post" class="flex flex-col gap-space-xs mt-space-xs"><?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int)$sel['id'] ?>"><input type="hidden" name="back_qs" value="<?= e($qs()) ?>">
         <textarea name="reason" rows="2" minlength="5" maxlength="255" required class="<?= $sel_cls ?> resize-none" placeholder="Alasan pengarsipan (wajib, mis. spam / duplikat #JR-...)"></textarea>
-        <span class="font-body-sm text-body-sm text-on-surface-variant">Laporan disembunyikan dari daftar dan halaman publik, tetapi data, foto, dan riwayatnya tetap tersimpan dan dapat dipulihkan.</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Laporan disembunyikan dari daftar ...</span>
         <button name="do" value="delete" onclick="return confirm('Arsipkan laporan ini?')" class="self-start px-space-md py-space-xs rounded bg-error text-on-error font-label-md text-label-md">Arsipkan</button>
       </form>
     </details>
