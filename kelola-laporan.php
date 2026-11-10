@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect($back);
         }
         if (mb_strlen($reason) < 5 || mb_strlen($reason) > 200) {
-            flash('error', 'Alasan pengarsipan wajib diisi (5-200 karakter).');
+            flash('error', 'Alasan penghapusan wajib diisi (5-200 karakter).');
             redirect($back);
         }
         $pdo = db();
@@ -385,14 +385,13 @@ include __DIR__ . '/includes/app_top.php';
       </div>
     </form>
     <?php if ($isAdmin): ?>
-    <?php if ($isAdmin): ?>
     <details class="mt-space-sm">
-      <summary class="cursor-pointer text-error font-label-md text-label-md inline-flex items-center gap-1"><span class="material-symbols-outlined text-lg">inventory_2</span>Arsipkan laporan</summary>
+      <summary class="cursor-pointer text-error font-label-md text-label-md inline-flex items-center gap-1"><span class="material-symbols-outlined text-lg">inventory_2</span>Hapus laporan</summary>
       <form method="post" class="flex flex-col gap-space-xs mt-space-xs"><?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int)$sel['id'] ?>"><input type="hidden" name="back_qs" value="<?= e($qs()) ?>">
-        <textarea name="reason" rows="2" minlength="5" maxlength="255" required class="<?= $sel_cls ?> resize-none" placeholder="Alasan pengarsipan (wajib, mis. spam / duplikat #JR-...)"></textarea>
-        <span class="font-body-sm text-body-sm text-on-surface-variant">Laporan disembunyikan dari daftar ...</span>
-        <button name="do" value="delete" onclick="return confirm('Arsipkan laporan ini?')" class="self-start px-space-md py-space-xs rounded bg-error text-on-error font-label-md text-label-md">Arsipkan</button>
+        <textarea name="reason" rows="2" minlength="5" maxlength="200" required class="<?= $sel_cls ?> resize-none" placeholder="Alasan penghapusan (wajib, akan dikirim ke pelapor)"></textarea>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Laporan disembunyikan dari daftar dan halaman publik, tetapi data, foto, dan riwayatnya tetap tersimpan dan dapat dipulihkan.</span>
+        <button name="do" value="delete" onclick="return confirm('Hapus laporan ini? Pelapor akan menerima notifikasi beserta alasannya.')" class="self-start px-space-md py-space-xs rounded bg-error text-on-error font-label-md text-label-md">Hapus &amp; Beritahu Pelapor</button>
       </form>
     </details>
     <?php endif; ?>
