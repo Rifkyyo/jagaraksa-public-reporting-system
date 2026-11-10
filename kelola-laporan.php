@@ -270,7 +270,7 @@ include __DIR__ . '/includes/app_top.php';
     ['Terlambat (SLA)', $slaInfo['overdue'], 'Klik untuk menyaring', 'border-l-4 border-red-500', 'text-error', 'kelola-laporan.php?sla=overdue'],
     ['Selesai Minggu Ini', $doneWeek, 'Kepatuhan SLA ' . ($slaInfo['compliance'] === null ? '-' : $slaInfo['compliance'] . '%'), '', 'text-emerald-700', 'kelola-laporan.php?status=selesai'],
   ] as [$l, $v, $sub, $b, $c, $href]): ?>
-  <<?= $href ? 'a href="' . e($href) . '"' : 'div' ?> class="block bg-surface-container-lowest rounded-xl shadow-sm p-space-md <?= $b ?> <?= $href ? 'hover:shadow-md transition-shadow' : '' ?>"><div class="font-label-md text-label-md text-on-surface-variant"><?= e($l) ?></div>
+  <<?= $href ? 'a href="' . e($href) . '"' : 'div' ?> class="block bg-surface-container-lowest rounded-none shadow-sm p-space-md <?= $b ?> <?= $href ? 'hover:shadow-md transition-shadow' : '' ?>"><div class="font-label-md text-label-md text-on-surface-variant"><?= e($l) ?></div>
     <div class="flex items-end justify-between mt-space-xs gap-1"><span class="font-display-lg text-headline-xl"><?= number_format((int)$v) ?></span><span class="font-label-sm text-label-sm text-right <?= $c ?>"><?= e($sub) ?></span></div></<?= $href ? 'a' : 'div' ?>>
   <?php endforeach; ?>
 </div>
@@ -306,9 +306,18 @@ include __DIR__ . '/includes/app_top.php';
           <td class="p-space-md"><div class="font-label-lg text-label-lg line-clamp-1"><?= e($r['title']) ?></div><div class="font-label-sm text-label-sm text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[14px]"><?= e($r['cat_icon'] ?? 'report') ?></span><?= e($r['cat_name']) ?></div>
             <div class="font-body-sm text-body-sm text-on-surface-variant">Pelapor: <?= $r['is_anonymous'] ? 'Anonim (#USR-' . (int)$r['user_id'] . ')' : e($r['reporter']) ?></div></td>
           <td class="p-space-md font-body-sm text-body-sm"><?= e($r['address']) ?><br><span class="text-on-surface-variant">Kec. <?= e($r['district_name'] ?? '-') ?></span></td>
-          <td class="p-space-md"><div class="flex flex-col items-start gap-1"><?= status_badge($r['status']) ?><?= priority_badge($r['priority']) ?><?= sla_badge($r) ?>
-            <?php if ((int)$r['escalation_level'] > 0 && in_array($r['status'], ['pending', 'proses'], true)): ?><span class="font-label-sm text-label-sm text-orange-700 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">priority_high</span>Eskalasi <?= (int)$r['escalation_level'] ?></span><?php endif; ?>
-            <?php if ($r['agency_code']): ?><span class="font-label-sm text-label-sm text-on-surface-variant">Dinas <?= e($r['agency_code']) ?></span><?php endif; ?></div></td>
+          <td class="p-space-md min-w-[11rem]">
+            <div class="flex flex-col items-start gap-1.5">
+              <div class="flex flex-wrap items-center gap-1"><?= status_badge($r['status']) ?><?= priority_badge($r['priority']) ?></div>
+              <?= sla_badge($r) ?>
+              <?php if (((int)$r['escalation_level'] > 0 && in_array($r['status'], ['pending', 'proses'], true)) || $r['agency_code']): ?>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-label-sm text-label-sm">
+                <?php if ((int)$r['escalation_level'] > 0 && in_array($r['status'], ['pending', 'proses'], true)): ?><span class="inline-flex items-center gap-0.5 text-orange-700 whitespace-nowrap"><span class="material-symbols-outlined text-[14px]">priority_high</span>Eskalasi <?= (int)$r['escalation_level'] ?></span><?php endif; ?>
+                <?php if ($r['agency_code']): ?><span class="text-on-surface-variant whitespace-nowrap">Dinas <?= e($r['agency_code']) ?></span><?php endif; ?>
+              </div>
+              <?php endif; ?>
+            </div>
+          </td>
         </tr>
       <?php endforeach; ?>
       </tbody>
@@ -366,13 +375,13 @@ include __DIR__ . '/includes/app_top.php';
     <form method="post" enctype="multipart/form-data" class="flex flex-col gap-space-sm">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= (int)$sel['id'] ?>"><input type="hidden" name="back_qs" value="<?= e($qs()) ?>">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
-        <label class="flex flex-col gap-1 font-label-sm text-label-sm">Dinas Penanggung Jawab
-          <select name="agency_id" class="<?= $sel_cls ?>"><option value="">- Belum disposisi -</option><?php foreach (agencies() as $a): ?><option value="<?= $a['id'] ?>" <?= (int)$sel['agency_id'] === (int)$a['id'] ? 'selected' : '' ?>><?= e($a['name']) ?></option><?php endforeach; ?></select></label>
-        <label class="flex flex-col gap-1 font-label-sm text-label-sm">Prioritas
-          <select name="priority" class="<?= $sel_cls ?>"><?php foreach (PRIORITY_META as $k => $m): ?><option value="<?= $k ?>" <?= $sel['priority'] === $k ? 'selected' : '' ?>><?= e($m['label']) ?> (<?= e(hours_text(SLA_HOURS[$k]['respond'])) ?> / <?= e(hours_text(SLA_HOURS[$k]['resolve'])) ?>)</option><?php endforeach; ?></select></label>
-        <label class="flex flex-col gap-1 font-label-sm text-label-sm">Ubah Status Tiket
-          <select name="status" id="statusSel" class="<?= $sel_cls ?>"><?php foreach ($allowed as $k): ?><option value="<?= $k ?>" <?= $sel['status'] === $k ? 'selected' : '' ?>><?= e(STATUS_META[$k]['label']) ?></option><?php endforeach; ?></select></label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+        <label class="flex flex-col gap-1 font-label-sm text-label-sm sm:col-span-2">Dinas Penanggung Jawab
+          <select name="agency_id" class="<?= $sel_cls ?> w-full"><option value="">- Belum disposisi -</option><?php foreach (agencies() as $a): ?><option value="<?= $a['id'] ?>" <?= (int)$sel['agency_id'] === (int)$a['id'] ? 'selected' : '' ?>><?= e($a['name']) ?></option><?php endforeach; ?></select></label>
+        <label class="flex flex-col gap-1 min-w-0 font-label-sm text-label-sm">Prioritas
+          <select name="priority" class="<?= $sel_cls ?> w-full"><?php foreach (PRIORITY_META as $k => $m): ?><option value="<?= $k ?>" <?= $sel['priority'] === $k ? 'selected' : '' ?>><?= e($m['label']) ?> (<?= e(hours_text(SLA_HOURS[$k]['respond'])) ?> / <?= e(hours_text(SLA_HOURS[$k]['resolve'])) ?>)</option><?php endforeach; ?></select></label>
+        <label class="flex flex-col gap-1 min-w-0 font-label-sm text-label-sm">Ubah Status Tiket
+          <select name="status" id="statusSel" class="<?= $sel_cls ?> w-full"><?php foreach ($allowed as $k): ?><option value="<?= $k ?>" <?= $sel['status'] === $k ? 'selected' : '' ?>><?= e(STATUS_META[$k]['label']) ?></option><?php endforeach; ?></select></label>
       </div>
       <label class="flex flex-col gap-1 font-label-sm text-label-sm"><span class="flex justify-between"><span id="msgLbl">Tanggapan Resmi untuk Pelapor</span><span id="mc">0/300</span></span>
         <textarea name="message" id="msgBox" maxlength="300" rows="3" oninput="document.getElementById('mc').textContent=this.value.length+'/300'" class="<?= $sel_cls ?> resize-none" placeholder="Tim teknis akan meninjau lokasi besok pukul 13.00 WIB..."></textarea></label>

@@ -13,7 +13,8 @@ $hal      = min(max(1, (int)($_GET['hal'] ?? 1)), $pages);
 $offset   = ($hal - 1) * $perPage;
 $listRows = [];
 if (!$data) {
-    $ls = db()->query("SELECT r.ticket_code, r.title, r.address, r.status, r.priority, r.created_at, c.name cat_name, d.name district_name
+    $ls = db()->query("SELECT r.ticket_code, r.title, r.address, r.status, r.priority, r.created_at, c.name cat_name, d.name district_name,
+        (SELECT a.file_path FROM report_attachments a WHERE a.report_id = r.id AND a.kind = 'bukti' ORDER BY a.id LIMIT 1) AS thumb
         FROM reports r JOIN categories c ON c.id = r.category_id LEFT JOIN districts d ON d.id = r.district_id
         WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $perPage OFFSET $offset");
     $listRows = $ls->fetchAll();
@@ -78,6 +79,16 @@ $card = 'bg-surface-container-lowest rounded-xl shadow-sm p-space-lg';
         <?= priority_badge($r['priority']) ?>
         <?php if ($r['impact_level'] === 'bahaya'): ?><span class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">Membahayakan Jiwa</span><?php endif; ?>
       </div>
+      <?php if (!empty($data['photos'])): ?>
+      <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Foto Laporan (<?= count($data['photos']) ?>)</div>
+      <div class="flex gap-space-xs overflow-x-auto pb-1 mb-space-sm">
+        <?php foreach ($data['photos'] as $u): ?>
+          <a href="<?= e($u) ?>" target="_blank" rel="noopener" class="shrink-0"><img src="<?= e($u) ?>" alt="Foto laporan <?= e($r['ticket_code']) ?>" loading="lazy" class="h-32 w-44 object-cover rounded-lg bg-surface-container"/></a>
+        <?php endforeach; ?>
+      </div>
+      <?php else: ?>
+      <p class="font-label-sm text-label-sm text-on-surface-variant mb-space-sm flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">image_not_supported</span>Pelapor tidak melampirkan foto.</p>
+      <?php endif; ?>
       <h2 class="font-headline-lg text-headline-lg"><?= e($r['title']) ?></h2>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs">
         <?= e($r['cat_name']) ?> &bull; <?= e($r['address']) ?><?= $r['district_name'] ? ' (Kec. ' . e($r['district_name']) . ')' : '' ?>
@@ -207,6 +218,7 @@ $card = 'bg-surface-container-lowest rounded-xl shadow-sm p-space-lg';
             <!-- Hold -->
             <?= priority_badge($x['priority']) ?>
           </div>
+          <?php if ($x['thumb']): ?><img src="<?= e(UPLOAD_URL . $x['thumb']) ?>" alt="" loading="lazy" class="w-full h-32 object-cover rounded-lg mb-space-xs bg-surface-container"/><?php endif; ?>
           <h3 class="font-label-lg text-label-lg line-clamp-2"><?= e($x['title']) ?></h3>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-space-2xs"><?= e($x['cat_name']) ?> &bull; <?= e($x['address']) ?><?= $x['district_name'] ? ' (Kec. ' . e($x['district_name']) . ')' : '' ?></p>
           <p class="font-label-sm text-label-sm text-on-surface-variant mt-space-xs"><?= e(format_tanggal($x['created_at'], true)) ?></p>

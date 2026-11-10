@@ -409,10 +409,15 @@ function public_report($code)
     }
     $ph = db()->prepare("SELECT file_path FROM report_attachments WHERE report_id = ? AND kind = 'penyelesaian' ORDER BY id");
     $ph->execute([$r['id']]);
+    $pb = db()->prepare("SELECT file_path FROM report_attachments WHERE report_id = ? AND kind = 'bukti' ORDER BY id");
+    $pb->execute([$r['id']]);
     return [
         'report'      => $r,
         'timeline'    => $timeline,
         'responses'   => $responses,
+        'photos'      => array_map(function ($x) {
+            return UPLOAD_URL . $x['file_path'];
+        }, $pb->fetchAll()),
         'done_photos' => array_map(function ($x) {
             return UPLOAD_URL . $x['file_path'];
         }, $ph->fetchAll()),
@@ -490,14 +495,14 @@ function public_report_payload($d)
 function priority_badge($p)
 {
     $m = PRIORITY_META[$p] ?? PRIORITY_META['sedang'];
-    return '<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $m['badge'] . '">' . e($m['label']) . '</span>';
+    return '<span class="inline-block whitespace-nowrap px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $m['badge'] . '">' . e($m['label']) . '</span>';
 }
 
 function sla_badge($r)
 {
     $s   = sla_state($r);
     $ico = ['overdue' => 'alarm', 'warning' => 'hourglass_top', 'ok' => 'schedule', 'done_ok' => 'task_alt', 'done_late' => 'alarm', 'closed' => 'block', 'none' => 'schedule'][$s['key']] ?? 'schedule';
-    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $s['badge'] . '">'
+    return '<span class="inline-flex items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $s['badge'] . '">'
         . '<span class="material-symbols-outlined text-[14px]">' . $ico . '</span>' . e($s['label']) . '</span>';
 }
 

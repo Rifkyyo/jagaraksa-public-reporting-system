@@ -303,7 +303,7 @@ const STATUS_META = [
 function status_badge($s, $extra = '')
 {
     $m = STATUS_META[$s] ?? STATUS_META['pending'];
-    return '<span class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $m['badge'] . ' ' . $extra . '">'
+    return '<span class="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-bold ' . $m['badge'] . ' ' . $extra . '">'
         . e($m['label']) . '</span>';
 }
 
