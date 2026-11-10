@@ -391,3 +391,5 @@ CREATE TRIGGER trg_report_logs_no_update BEFORE UPDATE ON report_logs FOR EACH R
 CREATE TRIGGER trg_report_logs_no_delete BEFORE DELETE ON report_logs FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'report_logs bersifat append-only';
 CREATE TRIGGER trg_audit_log_no_update BEFORE UPDATE ON audit_log FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log bersifat append-only';
 CREATE TRIGGER trg_audit_log_no_delete BEFORE DELETE ON audit_log FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log bersifat append-only';
+
+testing
